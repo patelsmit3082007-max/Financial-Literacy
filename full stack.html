@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Stock Prediction</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #050816;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%);
+      border-radius: 18px;
+      padding: 24px 24px 28px;
+      box-shadow:
+        0 24px 80px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.12);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-badge {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: linear-gradient(to right, #22c55e, #16a34a);
+      color: #022c22;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .status {
+      text-align: right;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      margin-right: 6px;
+      background: radial-gradient(circle, #22c55e 0, #16a34a 40%, #15803d 100%);
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.7);
+    }
+
+    .status-label {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .last-updated {
+      margin-top: 2px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.4fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .status {
+        text-align: left;
+      }
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 16px;
+      padding: 16px 16px 18px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 14px 45px rgba(15, 23, 42, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 50%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: #9ca3af;
+      letter-spacing: 0.14em;
+    }
+
+    .chip {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #9ca3af;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #38bdf8;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+
+    input[type="text"] {
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 8px 10px;
+      color: #e5e7eb;
+      outline: none;
+      font-size: 0.9rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.7);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    button {
+      border-radius: 10px;
+      border: none;
+      padding: 9px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #38bdf8, #22c55e);
+      color: #020617;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.8),
+        0 18px 40px rgba(8, 47, 73, 0.8);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.6),
+        0 22px 60px rgba(8, 47, 73, 0.9);
+      filter: brightness(1.04);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.8),
+        0 10px 30px rgba(8, 47, 73, 0.8);
+    }
+
+    .button-icon {
+      font-size: 1rem;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .metric {
+      flex: 1;
+      padding: 10px 11px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #9ca3af;
+      letter-spacing: 0.16em;
+      margin-bottom: 8px;
+    }
+
+    .metric-value-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .metric-sub {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      margin-top: 3px;
+    }
+
+    .metric-badge {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .metric-badge-up {
+      background: rgba(22, 163, 74, 0.16);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.6);
+    }
+
+    .metric-badge-down {
+      background: rgba(220, 38, 38, 0.15);
+      color: #fb7185;
+      border: 1px solid rgba(248, 113, 113, 0.6);
+    }
+
+    .symbol-pill {
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .symbol-pill span.code {
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+    }
+
+    .chart-container {
+      margin-top: 10px;
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.25), transparent 55%),
+                  radial-gradient(circle at bottom, rgba(22, 163, 74, 0.2), transparent 60%);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      padding: 10px 10px 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .chart-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      color: #9ca3af;
+      letter-spacing: 0.14em;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 2px;
+      border-radius: 999px;
+    }
+
+    .legend-swatch.actual {
+      background: #38bdf8;
+    }
+
+    .legend-swatch.predicted {
+      background: #22c55e;
+    }
+
+    canvas {
+      width: 100%;
+      height: 220px;
+      display: block;
+    }
+
+    .info {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    .info code {
+      font-size: 0.75rem;
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .stat-value {
+      color: #e5e7eb;
+    }
+
+    .badge-soft {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px dashed rgba(148, 163, 184, 0.5);
+      color: #9ca3af;
+      margin-left: 4px;
+    }
+
+    .footer-note {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div>
+        <div class="title">
+          Live Stock Prediction
+          <span class="title-badge">Demo Model</span>
+        </div>
+        <div class="subtitle">
+          Single-file app with frontend &amp; prediction logic in pure JavaScript.
+        </div>
+      </div>
+      <div class="status">
+        <div>
+          <span class="status-dot"></span>
+          <span class="status-label">Engine Running</span>
+        </div>
+        <div class="last-updated" id="lastUpdated">Last tick: —</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: Chart + prices -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Market Stream</div>
+          <div class="chip">
+            <span class="chip-dot"></span> Simulated prices
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group">
+            <label for="symbolInput">Stock symbol</label>
+            <input id="symbolInput" type="text" value="AAPL" maxlength="8" />
+          </div>
+          <div class="input-group" style="flex: 0 0 auto;">
+            <label>&nbsp;</label>
+            <button id="applySymbolBtn">
+              <span class="button-icon">▶</span> Apply
+            </button>
+          </div>
+        </div>
+
+        <div class="price-row">
+          <div class="metric">
+            <div class="metric-label">Last Price</div>
+            <div class="metric-value-row">
+              <div>
+                <div class="metric-value" id="currentPrice">$0.00</div>
+                <div class="metric-sub">
+                  Change: <span id="priceChange">0.00</span> (
+                  <span id="priceChangePct">0.00%</span> )
+                </div>
+              </div>
+              <div class="metric-badge metric-badge-up" id="priceChangeBadge">UP</div>
+            </div>
+            <div class="symbol-pill" id="symbolPill">
+              Symbol <span class="code">AAPL</span>
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Predicted (Short-Term)</div>
+            <div class="metric-value-row">
+              <div>
+                <div class="metric-value" id="predictedPrice">$0.00</div>
+                <div class="metric-sub">
+                  Horizon: <span id="horizonLabel">+5 ticks</span>
+                </div>
+              </div>
+              <div class="metric-badge metric-badge-up" id="predTrendBadge">BULL</div>
+            </div>
+            <div class="symbol-pill">
+              Confidence
+              <span id="confidenceLabel">0.0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Price vs Prediction</div>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-swatch actual"></span> Actual
+              </div>
+              <div class="legend-item">
+                <span class="legend-swatch predicted"></span> Predicted
+              </div>
+            </div>
+          </div>
+          <canvas id="chartCanvas"></canvas>
+        </div>
+
+        <div class="info">
+          This demo generates synthetic ticks and a simple prediction using a
+          hand‑crafted model written directly in <code>&lt;script&gt;</code>.
+          Replace the simulated engine with real API calls or a trained model
+          backend when you are ready.
+        </div>
+      </div>
+
+      <!-- Right: "backend" explanation / stats -->
+      <div class="side">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Prediction Engine</div>
+            <div class="chip">
+              <span class="chip-dot"></span> In-browser backend
+            </div>
+          </div>
+          <div style="position: relative; z-index: 1;">
+            <p class="info">
+              For this single‑file demo, the “backend” is implemented with pure
+              JavaScript:
+            </p>
+            <ul class="info" style="padding-left: 18px; margin: 6px 0;">
+              <li>Generates a synthetic price series with noise &amp; drift</li>
+              <li>Computes a moving average + momentum signal</li>
+              <li>Projects a short‑term target price</li>
+              <li>Updates the UI and chart in real time</li>
+            </ul>
+            <p class="info">
+              To turn this into a real app, expose an HTTP endpoint
+              (<code>/predict</code>) from your backend (Python, Node, etc.)
+              and call it from this page using <code>fetch()</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Stats</div>
+            <div class="chip">
+              <span class="chip-dot"></span> Live
+            </div>
+          </div>
+          <div style="position: relative; z-index: 1;">
+            <div class="stat-row">
+              <span>Ticks simulated</span>
+              <span class="stat-value" id="ticksCount">0</span>
+            </div>
+            <div class="stat-row">
+              <span>Avg absolute error</span>
+              <span class="stat-value" id="avgError">0.00</span>
+            </div>
+            <div class="stat-row">
+              <span>Last error</span>
+              <span class="stat-value" id="lastError">0.00</span>
+            </div>
+            <div class="stat-row">
+              <span>Model</span>
+              <span class="stat-value">
+                Drift + MA + Momentum
+                <span class="badge-soft">hand‑crafted</span>
+              </span>
+            </div>
+            <p class="footer-note">
+              This is <strong>not</strong> financial advice and uses only fake
+              data. It is purely a front‑end + in‑browser‑backend template.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- "Backend" + frontend logic -->
+  <script>
+    // ========= Config =========
+    const TICK_INTERVAL_MS = 1000;      // how often to generate a new price
+    const HISTORY_LENGTH = 60;         // how many points to keep
+    const PREDICTION_HORIZON = 5;      // predict N ticks ahead
+    const NOISE_STD = 0.7;             // random volatility
+    const BASE_DRIFT = 0.02;           // slow upward trend
+
+    // ========= State =========
+    let symbol = "AAPL";
+    let prices = [];
+    let predictions = [];
+    let tickIndex = 0;
+
+    let lastPredictionError = 0;
+    let cumulativeAbsError = 0;
+
+    // ========= DOM Refs =========
+    const symbolInput = document.getElementById("symbolInput");
+    const applySymbolBtn = document.getElementById("applySymbolBtn");
+    const symbolPill = document.getElementById("symbolPill");
+    const currentPriceEl = document.getElementById("currentPrice");
+    const predictedPriceEl = document.getElementById("predictedPrice");
+    const priceChangeEl = document.getElementById("priceChange");
+    const priceChangePctEl = document.getElementById("priceChangePct");
+    const priceChangeBadgeEl = document.getElementById("priceChangeBadge");
+    const predTrendBadgeEl = document.getElementById("predTrendBadge");
+    const confidenceLabelEl = document.getElementById("confidenceLabel");
+    const horizonLabelEl = document.getElementById("horizonLabel");
+    const ticksCountEl = document.getElementById("ticksCount");
+    const avgErrorEl = document.getElementById("avgError");
+    const lastErrorEl = document.getElementById("lastError");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    const chartCanvas = document.getElementById("chartCanvas");
+    const ctx = chartCanvas.getContext("2d");
+
+    function setCanvasSize() {
+      const rect = chartCanvas.getBoundingClientRect();
+      chartCanvas.width = rect.width * devicePixelRatio;
+      chartCanvas.height = rect.height * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    setCanvasSize();
+    window.addEventListener("resize", setCanvasSize);
+
+    // ========= Utils =========
+    function randn() {
+      // basic Box-Muller transform
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    function formatPrice(v) {
+      return "$" + v.toFixed(2);
+    }
+
+    function nowString() {
+      const d = new Date();
+      return (
+        d.getHours().toString().padStart(2, "0") +
+        ":" +
+        d.getMinutes().toString().padStart(2, "0") +
+        ":" +
+        d.getSeconds().toString().padStart(2, "0")
+      );
+    }
+
+    // ========= “Backend” Model Logic =========
+    function simulateNextPrice() {
+      if (prices.length === 0) {
+        const base = 120 + Math.random() * 40; // 120–160
+        return base;
+      }
+
+      const last = prices[prices.length - 1];
+
+      // short-term momentum based on last few steps
+      const windowSize = Math.min(5, prices.length);
+      let momentum = 0;
+      if (windowSize > 1) {
+        for (let i = prices.length - windowSize + 1; i < prices.length; i++) {
+          momentum += prices[i] - prices[i - 1];
+        }
+      }
+
+      const noise = NOISE_STD * randn();
+      const drift = BASE_DRIFT;
+
+      const next = last + momentum * 0.1 + drift + noise;
+      return Math.max(1, next);
+    }
+
+    function predictFuturePrice(history, horizon) {
+      if (history.length === 0) return 0;
+      const current = history[history.length - 1];
+
+      // moving average over last k points
+      const k = Math.min(10, history.length);
+      let sum = 0;
+      for (let i = history.length - k; i < history.length; i++) {
+        sum += history[i];
+      }
+      const ma = sum / k;
+
+      const momentum = current - history[Math.max(0, history.length - k)];
+      const projected = current + momentum * 0.4 + (ma - current) * 0.6 * (horizon / 5);
+
+      const volatility = estimateVolatility(history);
+      const confidence = Math.max(0.05, 1 / (1 + volatility / 2));
+
+      return {
+        price: Math.max(1, projected),
+        confidence,
+        trend: projected >= current ? "up" : "down",
+      };
+    }
+
+    function estimateVolatility(history) {
+      if (history.length < 2) return 0.5;
+      let diffs = [];
+      for (let i = 1; i < history.length; i++) {
+        diffs.push(history[i] - history[i - 1]);
+      }
+      const mean =
+        diffs.reduce((a, b) => a + b, 0) / diffs.length;
+      const variance =
+        diffs.reduce((acc, d) => acc + (d - mean) * (d - mean), 0) /
+        diffs.length;
+      return Math.sqrt(variance);
+    }
+
+    // ========= Drawing =========
+    function drawChart() {
+      ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+      const width = chartCanvas.clientWidth;
+      const height = chartCanvas.clientHeight;
+      const padding = { left: 40, right: 10, top: 10, bottom: 20 };
+
+      // no data yet
+      if (prices.length < 2) {
+        ctx.fillStyle = "#6b7280";
+        ctx.font = "11px system-ui, -apple-system";
+        ctx.fillText("Waiting for ticks...", padding.left, height / 2);
+        return;
+      }
+
+      // find min / max
+      const combined = [...prices, ...predictions].filter(
+        (v) => typeof v === "number" && !isNaN(v)
+      );
+      const minY = Math.min(...combined) * 0.997;
+      const maxY = Math.max(...combined) * 1.003;
+      const span = maxY - minY || 1;
+
+      function xScale(i, count) {
+        const plotWidth = width - padding.left - padding.right;
+        if (count <= 1) return padding.left;
+        return (
+          padding.left + (plotWidth * i) / (count - 1)
+        );
+      }
+
+      function yScale(value) {
+        const plotHeight = height - padding.top - padding.bottom;
+        return (
+          padding.top +
+          (1 - (value - minY) / span) * plotHeight
+        );
+      }
+
+      // grid
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      for (let i = 0; i <= 4; i++) {
+        const y = padding.top + ((height - padding.top - padding.bottom) * i) / 4;
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // actual prices line
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      prices.forEach((p, i) => {
+        const x = xScale(i, prices.length);
+        const y = yScale(p);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // predicted line
+      if (predictions.length > 1) {
+        ctx.strokeStyle = "#22c55e";
+        ctx.lineWidth = 1.7;
+        ctx.beginPath();
+        predictions.forEach((p, i) => {
+          if (p == null) return;
+          const x = xScale(i, predictions.length);
+          const y = yScale(p);
+          if (isNaN(y)) return;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      // last point markers
+      const lastIdx = prices.length - 1;
+      const lastX = xScale(lastIdx, prices.length);
+      const lastY = yScale(prices[lastIdx]);
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      const lastPred = predictions[lastIdx];
+      if (typeof lastPred === "number" && !isNaN(lastPred)) {
+        const py = yScale(lastPred);
+        ctx.fillStyle = "#22c55e";
+        ctx.beginPath();
+        ctx.arc(lastX, py, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // price labels on y-axis
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "10px system-ui, -apple-system";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let i = 0; i <= 4; i++) {
+        const y = padding.top + ((height - padding.top - padding.bottom) * i) / 4;
+        const val = maxY - (span * i) / 4;
+        ctx.fillText(val.toFixed(2), padding.left - 4, y);
+      }
+    }
+
+    // ========= UI Updates =========
+    function updateUI(latestPrice, predictionResult) {
+      const prev = prices[prices.length - 2] ?? latestPrice;
+      const change = latestPrice - prev;
+      const changePct = prev !== 0 ? (change / prev) * 100 : 0;
+
+      currentPriceEl.textContent = formatPrice(latestPrice);
+      priceChangeEl.textContent = change.toFixed(2);
+      priceChangePctEl.textContent = changePct.toFixed(2) + "%";
+
+      const isUp = change >= 0;
+      priceChangeBadgeEl.textContent = isUp ? "UP" : "DOWN";
+      priceChangeBadgeEl.classList.toggle("metric-badge-up", isUp);
+      priceChangeBadgeEl.classList.toggle("metric-badge-down", !isUp);
+
+      const predPrice = predictionResult.price;
+      predictedPriceEl.textContent = formatPrice(predPrice);
+
+      const trendUp = predictionResult.trend === "up";
+      predTrendBadgeEl.textContent = trendUp ? "BULL" : "BEAR";
+      predTrendBadgeEl.classList.toggle("metric-badge-up", trendUp);
+      predTrendBadgeEl.classList.toggle("metric-badge-down", !trendUp);
+
+      confidenceLabelEl.textContent = predictionResult.confidence.toFixed(2);
+      horizonLabelEl.textContent = `+${PREDICTION_HORIZON} ticks`;
+
+      // stats
+      ticksCountEl.textContent = tickIndex.toString();
+      avgErrorEl.textContent =
+        tickIndex > 0
+          ? (cumulativeAbsError / tickIndex).toFixed(2)
+          : "0.00";
+      lastErrorEl.textContent = lastPredictionError.toFixed(2);
+
+      lastUpdatedEl.textContent = "Last tick: " + nowString();
+
+      // symbol pill
+      symbolPill.querySelector(".code")?.remove();
+      const codeSpan = document.createElement("span");
+      codeSpan.className = "code";
+      codeSpan.textContent = symbol;
+      symbolPill.appendChild(codeSpan);
+    }
+
+    // ========= Main loop =========
+    function step() {
+      const nextPrice = simulateNextPrice();
+      prices.push(nextPrice);
+
+      if (prices.length > HISTORY_LENGTH) {
+        prices = prices.slice(-HISTORY_LENGTH);
+        predictions = predictions.slice(-HISTORY_LENGTH);
+      }
+
+      const predictionResult = predictFuturePrice(prices, PREDICTION_HORIZON);
+
+      // align prediction to current index
+      const idx = prices.length - 1;
+      predictions[idx] = predictionResult.price;
+
+      // error vs previous prediction (if any)
+      if (idx > 0 && predictions[idx - 1] != null) {
+        lastPredictionError = nextPrice - predictions[idx - 1];
+        cumulativeAbsError += Math.abs(lastPredictionError);
+      }
+
+      tickIndex++;
+      updateUI(nextPrice, predictionResult);
+      drawChart();
+    }
+
+    // ========= Symbol handling =========
+    applySymbolBtn.addEventListener("click", () => {
+      const val = symbolInput.value.trim().toUpperCase() || "TICK";
+      symbol = val.slice(0, 8);
+      // reset series for new symbol
+      prices = [];
+      predictions = [];
+      tickIndex = 0;
+      cumulativeAbsError = 0;
+      lastPredictionError = 0;
+      ticksCountEl.textContent = "0";
+      avgErrorEl.textContent = "0.00";
+      lastErrorEl.textContent = "0.00";
+      drawChart();
+    });
+
+    symbolInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        applySymbolBtn.click();
+      }
+    });
+
+    // ========= Start engine =========
+    drawChart();
+    setInterval(step, TICK_INTERVAL_MS);
+  </script>
+</body>
+</html>
